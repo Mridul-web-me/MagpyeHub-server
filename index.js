@@ -5,7 +5,8 @@ const { MongoClient } = require('mongodb');
 const app = express()
 const cors = require('cors');
 require('dotenv').config()
-// const ObjectId = require('mongodb').ObjectId;
+const ObjectId = require('mongodb').ObjectId;
+// const Category = require('mongodb').category;
 
 const port = process.env.PORT || 5000;
 
@@ -23,6 +24,7 @@ async function run() {
         await client.connect();
         const database = client.db('MagpyeHub');
         const productsCollection = database.collection('products');
+        const newsLaterCollection = database.collection('newslater');
 
         //POST API
         app.post('/products', async (req, res) => {
@@ -30,6 +32,14 @@ async function run() {
             console.log('Hit The Post API', product);
 
             const result = await productsCollection.insertOne(product);
+            console.log(result);
+            res.json(result)
+        })
+        app.post('/newsLater', async (req, res) => {
+            const email = req.body;
+            console.log('Hit The Post API', email);
+
+            const result = await newsLaterCollection.insertOne(email);
             console.log(result);
             res.json(result)
         })
@@ -44,13 +54,17 @@ async function run() {
             res.send(products);
         })
 
-        // app.get('/products/:id', async (req, res) => {
-        //     const id = req.params.id;
-        //     console.log('getting Product');
-        //     const query = { _id: ObjectId(id) };
-        //     const product = await productsCollection.findOne(query);
-        //     res.json(product);
-        // })
+
+        app.get('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log('getting Product');
+            const query = { _id: ObjectId(id) };
+            const product = await productsCollection.findOne(query);
+            res.send(product);
+        })
+
+
+
 
     }
     finally {
