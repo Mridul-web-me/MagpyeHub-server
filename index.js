@@ -6,13 +6,14 @@ const app = express()
 const cors = require('cors');
 require('dotenv').config()
 const ObjectId = require('mongodb').ObjectId;
-// const Category = require('mongodb').category;
+const fileUpload = require('express-fileupload');
 
 const port = process.env.PORT || 5000;
 
 //MiddleWere
 app.use(cors())
 app.use(express.json());
+app.use(fileUpload());
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.x1ahb.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
@@ -25,21 +26,35 @@ async function run() {
         const database = client.db('MagpyeHub');
         const productsCollection = database.collection('products');
         const newsLaterCollection = database.collection('newslater');
+        const addressCollection = database.collection('addressBook');
 
         //POST API
         app.post('/products', async (req, res) => {
-            const product = req.body;
-            console.log('Hit The Post API', product);
+            // const product = req.body;
+            // console.log('Hit The Post API', product);
 
-            const result = await productsCollection.insertOne(product);
-            console.log(result);
-            res.json(result)
+            // const result = await productsCollection.insertOne(product);
+            // console.log(result);
+            // res.json(result)
+            console.log('body', req.body);
+            console.log('files', req.files);
+            res.json({ success: true })
         })
+
         app.post('/newsLater', async (req, res) => {
             const email = req.body;
             console.log('Hit The Post API', email);
 
             const result = await newsLaterCollection.insertOne(email);
+            console.log(result);
+            res.json(result)
+        })
+
+        app.post('/addressBook', async (req, res) => {
+            const address = req.body;
+            console.log('Hit The Post API', address);
+
+            const result = await addressCollection.insertOne(address);
             console.log(result);
             res.json(result)
         })
