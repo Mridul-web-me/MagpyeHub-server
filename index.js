@@ -53,7 +53,6 @@ async function run() {
         app.post('/addressBook', async (req, res) => {
             const address = req.body;
             console.log('Hit The Post API', address);
-
             const result = await addressCollection.insertOne(address);
             console.log(result);
             res.json(result)
@@ -64,9 +63,25 @@ async function run() {
         // GET API
         // GET API
         app.get('/products', async (req, res) => {
-            const cursor = productsCollection.find({});
-            const products = await cursor.toArray();
-            res.send(products);
+            console.log(req.query);
+            const category = req.query.category
+            const cursor = productsCollection.find({ category: category });
+            const page = req.query.page;
+            const size = parseInt(req.query.size);
+            let products;
+            const count = await cursor.count();
+
+            if (page) {
+                products = await cursor.skip(page * size).limit(size).toArray();
+            }
+            else {
+                products = await cursor.toArray();
+            }
+
+            res.send({
+                count,
+                products
+            });
         })
 
 
@@ -78,6 +93,14 @@ async function run() {
             res.send(product);
         })
 
+
+
+
+        app.get('/addressBook', async (req, res) => {
+            const cursor = addressCollection.find({});
+            const review = await cursor.toArray();
+            res.send(review);
+        })
 
 
 
