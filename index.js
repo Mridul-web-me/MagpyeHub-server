@@ -65,7 +65,12 @@ async function run() {
         app.get('/products', async (req, res) => {
             console.log(req.query);
             const category = req.query.category
-            const cursor = productsCollection.find({ category: category });
+            if (category) {
+                cursor = productsCollection.find({ category: category });
+            }
+            else {
+                cursor = productsCollection.find({});
+            }
             const page = req.query.page;
             const size = parseInt(req.query.size);
             let products;
@@ -92,6 +97,13 @@ async function run() {
             const product = await productsCollection.findOne(query);
             res.send(product);
         })
+        // app.get('/products?_id', async (req, res) => {
+        //     const id = req.params.id;
+        //     console.log('getting Product');
+        //     const query = { _id: ObjectId(id) };
+        //     const product = await productsCollection.find(query);
+        //     res.send(product);
+        // })
 
 
 
