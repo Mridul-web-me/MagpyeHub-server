@@ -65,6 +65,8 @@ async function run() {
         app.get('/products', async (req, res) => {
             console.log(req.query);
             const category = req.query.category
+            // const searchText = req.query.search
+
             if (category) {
                 cursor = productsCollection.find({ category: category });
             }
