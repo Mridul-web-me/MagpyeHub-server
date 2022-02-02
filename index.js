@@ -27,6 +27,7 @@ async function run() {
         const productsCollection = database.collection('products');
         const newsLaterCollection = database.collection('newslater');
         const addressCollection = database.collection('addressBook');
+        const ordersCollection = database.collection('orders');
 
         //POST API
         app.post('/products', async (req, res) => {
@@ -55,6 +56,15 @@ async function run() {
             console.log('Hit The Post API', address);
             const result = await addressCollection.insertOne(address);
             console.log(result);
+            res.json(result)
+        })
+
+        // Post Order api
+
+        app.post('/orders', async (req, res) => {
+            const order = req.body;
+            order.createdAt = new Date();
+            const result = await ordersCollection.insertOne(order)
             res.json(result)
         })
 
@@ -117,6 +127,16 @@ async function run() {
         })
 
 
+        app.get('/orders', async (req, res) => {
+            let query = {};
+            const email = req.query.email;
+            if (email) {
+                query = { email: email }
+            }
+            const cursor = ordersCollection.find(query)
+            const order = await cursor.toArray();
+            res.send(order)
+        })
 
     }
     finally {
