@@ -75,7 +75,11 @@ async function run() {
         app.get('/products', async (req, res) => {
             console.log(req.query);
             const category = req.query.category
-            // const searchText = req.query.search
+            const searchText = req.query.search
+            if (searchText) {
+                cursor = productsCollection.find({ searchText: searchText });
+
+            }
 
             if (category) {
                 cursor = productsCollection.find({ category: category });
@@ -121,9 +125,14 @@ async function run() {
 
 
         app.get('/addressBook', async (req, res) => {
-            const cursor = addressCollection.find({});
-            const review = await cursor.toArray();
-            res.send(review);
+            let query = {};
+            const email = req.query.email;
+            if (email) {
+                query = { email: email }
+            }
+            const cursor = addressCollection.find(query)
+            const address = await cursor.toArray();
+            res.send(address)
         })
 
 
