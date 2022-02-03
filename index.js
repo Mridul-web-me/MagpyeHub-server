@@ -68,9 +68,6 @@ async function run() {
             res.json(result)
         })
 
-
-
-        // GET API
         // GET API
         app.get('/products', async (req, res) => {
             console.log(req.query);
@@ -80,7 +77,6 @@ async function run() {
                 cursor = productsCollection.find({ searchText: searchText });
 
             }
-
             if (category) {
                 cursor = productsCollection.find({ category: category });
             }
