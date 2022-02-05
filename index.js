@@ -72,11 +72,8 @@ async function run() {
         app.get('/products', async (req, res) => {
             console.log(req.query);
             const category = req.query.category
-            const searchText = req.query.search
-            if (searchText) {
-                cursor = productsCollection.find({ searchText: searchText });
-
-            }
+            const search = req.query.search
+            console.log(search);
             if (category) {
                 cursor = productsCollection.find({ category: category });
             }
@@ -93,6 +90,10 @@ async function run() {
             }
             else {
                 products = await cursor.toArray();
+            }
+            if (search) {
+                const searchResult = products.filter(product => product.title.toLowerCase().includes(search))
+                res.send(searchResult)
             }
 
             res.send({
