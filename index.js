@@ -31,21 +31,29 @@ async function run() {
 
         //POST API
         app.post('/products', async (req, res) => {
-            // const product = req.body;
-            // console.log('Hit The Post API', product);
+            const title = req.body.title;
+            const price = req.body.price;
+            const productCode = req.body.productCode;
+            const category = req.body.category;
+            const img = req.files.image;
+            const imageData = img.data;
+            const encodedImage = imageData.toString('base64');
+            const imageBuffer = Buffer.from(encodedImage, 'base64');
+            const products = {
+                title,
+                price,
+                productCode,
+                category,
+                img: imageBuffer
+            }
+            const result = await productsCollection.insertOne(products)
 
-            // const result = await productsCollection.insertOne(product);
-            // console.log(result);
-            // res.json(result)
-            console.log('body', req.body);
-            console.log('files', req.files);
-            res.json({ success: true })
+            res.json(result)
         })
 
         app.post('/newsLater', async (req, res) => {
             const email = req.body;
             console.log('Hit The Post API', email);
-
             const result = await newsLaterCollection.insertOne(email);
             console.log(result);
             res.json(result)
@@ -134,6 +142,7 @@ async function run() {
 
 
         app.get('/orders', async (req, res) => {
+            console.log(req.headers);
             let query = {};
             const email = req.query.email;
             if (email) {
