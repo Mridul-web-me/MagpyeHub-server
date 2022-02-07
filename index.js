@@ -4,11 +4,20 @@ const { MongoClient } = require('mongodb');
 
 const app = express()
 const cors = require('cors');
+var admin = require("firebase-admin");
 require('dotenv').config()
 const ObjectId = require('mongodb').ObjectId;
 const fileUpload = require('express-fileupload');
 
+
 const port = process.env.PORT || 5000;
+
+//FIREBASE ADMIN INITIALIZATION
+// var serviceAccount = require('./magpayhub-5fe9a-firebase-adminsdk-2wbpu-bd423174ef.json')
+
+// admin.initializeApp({
+//     credential: admin.credential.cert(serviceAccount)
+// });
 
 //MiddleWere
 app.use(cors())
@@ -18,6 +27,19 @@ app.use(fileUpload());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.x1ahb.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+
+// async function verifyToken(req, res, next) {
+//     if (req.headers?.authorization?.startsWith('Bearer ')) {
+//         const idToken = req.headers.authorization.split('Bearer ')[1];
+//         try {
+//             const decodedUser = await admin.auth().verifyIdToken(idToken);
+//             req.decodedUserEmail = decodedUser.email;
+//         }
+//         catch { }
+//     }
+//     next();
+// }
 
 
 async function run() {
@@ -118,15 +140,6 @@ async function run() {
             const product = await productsCollection.findOne(query);
             res.send(product);
         })
-        // app.get('/products?_id', async (req, res) => {
-        //     const id = req.params.id;
-        //     console.log('getting Product');
-        //     const query = { _id: ObjectId(id) };
-        //     const product = await productsCollection.find(query);
-        //     res.send(product);
-        // })
-
-
 
 
         app.get('/addressBook', async (req, res) => {
@@ -140,18 +153,32 @@ async function run() {
             res.send(address)
         })
 
-
         app.get('/orders', async (req, res) => {
-            console.log(req.headers);
             let query = {};
             const email = req.query.email;
             if (email) {
                 query = { email: email }
             }
             const cursor = ordersCollection.find(query)
-            const order = await cursor.toArray();
-            res.send(order)
+            const address = await cursor.toArray();
+            res.send(address)
         })
+
+
+        // app.get('/orders', verifyToken, async (req, res) => {
+        //     const email = req.query.email;
+        //     console.log(email);
+        //     if (req.decodedUserEmail === email) {
+        //         const query = { email: email }
+        //         console.log(query);
+        //         const cursor = ordersCollection.find(query)
+        //         const order = await cursor.toArray();
+        //         res.json(order)
+        //     }
+        //     else {
+        //         res.status(401).json({ message: 'User Not Authorized' })
+        //     }
+        // })
 
     }
     finally {
