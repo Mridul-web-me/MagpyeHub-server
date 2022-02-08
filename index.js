@@ -13,11 +13,11 @@ const fileUpload = require('express-fileupload');
 const port = process.env.PORT || 5000;
 
 //FIREBASE ADMIN INITIALIZATION
-// var serviceAccount = require('./magpayhub-5fe9a-firebase-adminsdk-2wbpu-bd423174ef.json')
+var serviceAccount = require('./magpayhub-5fe9a-firebase-adminsdk-2wbpu-bd423174ef.json')
 
-// admin.initializeApp({
-//     credential: admin.credential.cert(serviceAccount)
-// });
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
 
 //MiddleWere
 app.use(cors())
@@ -29,17 +29,17 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 
-// async function verifyToken(req, res, next) {
-//     if (req.headers?.authorization?.startsWith('Bearer ')) {
-//         const idToken = req.headers.authorization.split('Bearer ')[1];
-//         try {
-//             const decodedUser = await admin.auth().verifyIdToken(idToken);
-//             req.decodedUserEmail = decodedUser.email;
-//         }
-//         catch { }
-//     }
-//     next();
-// }
+async function verifyToken(req, res, next) {
+    if (req.headers?.authorization?.startsWith('Bearer ')) {
+        const idToken = req.headers.authorization.split('Bearer ')[1];
+        try {
+            const decodedUser = await admin.auth().verifyIdToken(idToken);
+            req.decodedUserEmail = decodedUser.email;
+        }
+        catch { }
+    }
+    next();
+}
 
 
 async function run() {
@@ -75,7 +75,7 @@ async function run() {
 
         app.post('/newsLater', async (req, res) => {
             const email = req.body;
-            console.log('Hit The Post API', email);
+            // console.log('Hit The Post API', email);
             const result = await newsLaterCollection.insertOne(email);
             console.log(result);
             res.json(result)
@@ -83,7 +83,7 @@ async function run() {
 
         app.post('/addressBook', async (req, res) => {
             const address = req.body;
-            console.log('Hit The Post API', address);
+            // console.log('Hit The Post API', address);
             const result = await addressCollection.insertOne(address);
             console.log(result);
             res.json(result)
@@ -100,10 +100,10 @@ async function run() {
 
         // GET API
         app.get('/products', async (req, res) => {
-            console.log(req.query);
+            // console.log(req.query);
             const category = req.query.category
             const search = req.query.search
-            console.log(search);
+            // console.log(search);
             if (category) {
                 cursor = productsCollection.find({ category: category });
             }
@@ -135,50 +135,44 @@ async function run() {
 
         app.get('/products/:id', async (req, res) => {
             const id = req.params.id;
-            console.log('getting Product');
+            // console.log('getting Product');
             const query = { _id: ObjectId(id) };
             const product = await productsCollection.findOne(query);
             res.send(product);
         })
 
 
-        app.get('/addressBook', async (req, res) => {
-            let query = {};
+        app.get('/addressBook', verifyToken, async (req, res) => {
             const email = req.query.email;
-            if (email) {
-                query = { email: email }
+            console.log(email);
+            if (req.decodedUserEmail === email) {
+                const query = { email: email }
+                console.log(query);
+                const cursor = addressCollection.find(query)
+                const address = await cursor.toArray();
+                res.json(address)
             }
-            const cursor = addressCollection.find(query)
-            const address = await cursor.toArray();
-            res.send(address)
-        })
-
-        app.get('/orders', async (req, res) => {
-            let query = {};
-            const email = req.query.email;
-            if (email) {
-                query = { email: email }
+            else {
+                res.status(401).json({ message: 'User Not Authorized' })
             }
-            const cursor = ordersCollection.find(query)
-            const address = await cursor.toArray();
-            res.send(address)
         })
 
 
-        // app.get('/orders', verifyToken, async (req, res) => {
-        //     const email = req.query.email;
-        //     console.log(email);
-        //     if (req.decodedUserEmail === email) {
-        //         const query = { email: email }
-        //         console.log(query);
-        //         const cursor = ordersCollection.find(query)
-        //         const order = await cursor.toArray();
-        //         res.json(order)
-        //     }
-        //     else {
-        //         res.status(401).json({ message: 'User Not Authorized' })
-        //     }
-        // })
+
+        app.get('/orders', verifyToken, async (req, res) => {
+            const email = req.query.email;
+            console.log(email);
+            if (req.decodedUserEmail === email) {
+                const query = { email: email }
+                console.log(query);
+                const cursor = ordersCollection.find(query)
+                const order = await cursor.toArray();
+                res.json(order)
+            }
+            else {
+                res.status(401).json({ message: 'User Not Authorized' })
+            }
+        })
 
     }
     finally {
