@@ -1,7 +1,7 @@
 const express = require('express')
 const { MongoClient } = require('mongodb');
 
-
+const multer = require('multer')
 const app = express()
 const cors = require('cors');
 var admin = require("firebase-admin");
@@ -89,6 +89,23 @@ async function run() {
             res.json(result)
         })
 
+        // UPDATE API
+        app.put('/addressBook/:id', async (req, res) => {
+            const id = req.params.id;
+            const updatedAddressBook = req.body;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    name: updatedAddressBook.name,
+                    email: updatedAddressBook.email
+                },
+            };
+            const result = await addressCollection.updateOne(filter, updateDoc, options)
+            // console.log('updating user', req);
+            res.json(result);
+        })
+
         // Post Order api
 
         app.post('/orders', async (req, res) => {
@@ -139,6 +156,15 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const product = await productsCollection.findOne(query);
             res.send(product);
+        })
+
+
+        // DELETE API
+        app.delete('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await productsCollection.deleteOne(query);
+            res.send(result);
         })
 
 
