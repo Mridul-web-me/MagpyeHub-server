@@ -2,6 +2,7 @@ const express = require('express')
 const { MongoClient } = require('mongodb');
 
 const multer = require('multer')
+const upload = multer({ dest: 'products/' })
 const app = express()
 const cors = require('cors');
 var admin = require("firebase-admin");
@@ -52,30 +53,29 @@ async function run() {
         const ordersCollection = database.collection('orders');
 
         //POST API
-        app.post('/products', async (req, res) => {
-            const title = req.body.title;
-            const price = req.body.price;
-            const productCode = req.body.productCode;
-            const category = req.body.category;
-            const img = req.files.image;
-            const imageData = img.data;
-            const encodedImage = imageData.toString('base64');
-            const imageBuffer = Buffer.from(encodedImage, 'base64');
-            const products = {
-                title,
-                price,
-                productCode,
-                category,
-                img: imageBuffer
-            }
-            const result = await productsCollection.insertOne(products)
+        // app.post('/products', async (req, res) => {
+        //     const title = req.body.title;
+        //     const price = req.body.price;
+        //     const productCode = req.body.productCode;
+        //     const category = req.body.category;
+        //     const img = req.files.image;
+        //     const imageData = img.data;
+        //     const encodedImage = imageData.toString('base64');
+        //     const imageBuffer = Buffer.from(encodedImage, 'base64');
+        //     const products = {
+        //         title,
+        //         price,
+        //         productCode,
+        //         category,
+        //         img: imageBuffer
+        //     }
+        //     const result = await productsCollection.insertOne(products)
 
-            res.json(result)
-        })
+        //     res.json(result)
+        // })
 
         app.post('/newsLater', async (req, res) => {
             const email = req.body;
-            // console.log('Hit The Post API', email);
             const result = await newsLaterCollection.insertOne(email);
             console.log(result);
             res.json(result)
@@ -83,8 +83,13 @@ async function run() {
 
         app.post('/addressBook', async (req, res) => {
             const address = req.body;
-            // console.log('Hit The Post API', address);
             const result = await addressCollection.insertOne(address);
+            console.log(result);
+            res.json(result)
+        })
+        app.post('/products', async (req, res) => {
+            const products = req.body;
+            const result = await productsCollection.insertOne(products);
             console.log(result);
             res.json(result)
         })
@@ -214,3 +219,5 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
     console.log(`listening at ${port} `)
 })
+
+
