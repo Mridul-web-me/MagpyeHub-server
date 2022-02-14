@@ -21,6 +21,7 @@ admin.initializeApp({
 });
 
 //MiddleWere
+
 app.use(cors())
 app.use(express.json());
 app.use(fileUpload());
@@ -107,7 +108,6 @@ async function run() {
                 },
             };
             const result = await addressCollection.updateOne(filter, updateDoc, options)
-            // console.log('updating user', req);
             res.json(result);
         })
 
@@ -122,10 +122,8 @@ async function run() {
 
         // GET API
         app.get('/products', async (req, res) => {
-            // console.log(req.query);
             const category = req.query.category
-            const search = req.query.search
-            // console.log(search);
+            const search = req.query.search;
             if (category) {
                 cursor = productsCollection.find({ category: category });
             }
@@ -157,7 +155,6 @@ async function run() {
 
         app.get('/products/:id', async (req, res) => {
             const id = req.params.id;
-            // console.log('getting Product');
             const query = { _id: ObjectId(id) };
             const product = await productsCollection.findOne(query);
             res.send(product);
