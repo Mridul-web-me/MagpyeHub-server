@@ -21,7 +21,6 @@ admin.initializeApp({
 });
 
 //MiddleWere
-
 app.use(cors())
 app.use(express.json());
 app.use(fileUpload());
@@ -42,7 +41,6 @@ async function verifyToken(req, res, next) {
     }
     next();
 }
-
 
 async function run() {
     try {
