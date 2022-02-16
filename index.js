@@ -119,7 +119,7 @@ async function run() {
         })
 
         // GET API
-        app.get('/products', async (req, res) => {
+        app.get('/products', async (req, res, next) => {
             const category = req.query.category
             const search = req.query.search;
             if (category) {
@@ -143,7 +143,7 @@ async function run() {
                 const searchResult = products.filter(product => product.title.toLowerCase().includes(search))
                 res.send(searchResult)
             }
-
+            next();
             res.send({
                 count,
                 products
