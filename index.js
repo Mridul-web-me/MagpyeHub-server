@@ -118,6 +118,7 @@ async function run() {
             res.json(result)
         })
 
+
         // GET API
         app.get('/products', async (req, res, next) => {
             const category = req.query.category
