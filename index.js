@@ -14,11 +14,11 @@ const fileUpload = require('express-fileupload');
 const port = process.env.PORT || 5000;
 
 //FIREBASE ADMIN INITIALIZATION
-// var serviceAccount = require('./magpayhub-5fe9a-firebase-adminsdk-2wbpu-bd423174ef.json')
+var serviceAccount = JSON.parse(process.env.SERVICE_FIREBASE_ACCOUNT)
 
-// admin.initializeApp({
-//     credential: admin.credential.cert(serviceAccount)
-// });
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
 
 //MiddleWere
 
