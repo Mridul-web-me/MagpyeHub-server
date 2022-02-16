@@ -184,7 +184,25 @@ async function run() {
                 res.status(401).json({ message: 'User Not Authorized' })
             }
         })
+        // app.get('/addressBook', async (req, res) => {
+        //     const email = req.query.email;
+        //     console.log(email);
+        //     const query = { email: email }
+        //     console.log(query);
+        //     const cursor = addressCollection.find(query)
+        //     const address = await cursor.toArray();
+        //     res.json(address)
+        // })
 
+        app.put('/addressBook', async (req, res) => {
+            const email = req.body;
+            console.log('put', email)
+            const filter = { email: email };
+            console.log(filter)
+            const updateDoc = { $set: email };
+            const result = await addressCollection.updateOne(filter, updateDoc);
+            res.json(result);
+        })
 
 
         app.get('/orders', verifyToken, async (req, res) => {
