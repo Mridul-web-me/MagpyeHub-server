@@ -201,7 +201,6 @@ async function run() {
                 res.status(401).json({ message: 'User Not Authorized' })
             }
         })
-
     }
     finally {
         // await client.close();
