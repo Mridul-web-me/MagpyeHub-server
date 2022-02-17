@@ -15,7 +15,6 @@ const port = process.env.PORT || 5000;
 
 //FIREBASE ADMIN INITIALIZATION
 var serviceAccount = JSON.parse(process.env.SERVICE_FIREBASE_ACCOUNT)
-
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
@@ -24,6 +23,12 @@ admin.initializeApp({
 app.use(cors())
 app.use(express.json());
 app.use(fileUpload());
+app.use((req, res, next) => {
+    res.setHeader('Acces-Control-Allow-Origin', '*');
+    res.setHeader('Acces-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE');
+    res.setHeader('Acces-Contorl-Allow-Methods', 'Content-Type', 'Authorization');
+    next();
+})
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.x1ahb.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
@@ -140,12 +145,6 @@ async function run() {
             else {
                 products = await cursor.toArray();
             }
-            // if (search) {
-            //     const searchResult = products.filter(product => product.title.toLowerCase().includes(search))
-            //     res.send(searchResult)
-            // }
-            // let searchResult = []
-            // searchResult = value
             res.send({
                 count,
                 products,
@@ -180,7 +179,7 @@ async function run() {
         })
 
 
-        app.get('/addressBook', verifyToken, async (req, res) => {
+        app.get('/addressBook', async (req, res) => {
             const email = req.query.email;
             console.log(email);
             if (req.decodedUserEmail === email) {
@@ -194,15 +193,7 @@ async function run() {
                 res.status(401).json({ message: 'User Not Authorized' })
             }
         })
-        // app.get('/addressBook', async (req, res) => {
-        //     const email = req.query.email;
-        //     console.log(email);
-        //     const query = { email: email }
-        //     console.log(query);
-        //     const cursor = addressCollection.find(query)
-        //     const address = await cursor.toArray();
-        //     res.json(address)
-        // })
+
 
         app.put('/addressBook', async (req, res) => {
             const email = req.body;
@@ -228,12 +219,6 @@ async function run() {
             else {
                 res.status(401).json({ message: 'User Not Authorized' })
             }
-        })
-
-        app.get('/orders/savedProduct', async (req, res) => {
-            const cursor = ordersCollection.find({})
-            const result = await cursor.toArray()
-            res.send(result);
         })
     }
     finally {
