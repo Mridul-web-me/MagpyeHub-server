@@ -157,7 +157,7 @@ async function run() {
             const cursor = productsCollection.find({})
             const result = await cursor.toArray()
             if (search) {
-                const searchResult = result.filter(product => product.title.toLowerCase().includes(search))
+                const searchResult = result.filter(product => product.title.toLowerCase().includes(search.toLowerCase()))
                 res.send(searchResult)
             }
         })
