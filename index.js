@@ -30,7 +30,7 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 
-async function verifyToken(req, res, next) {
+async function verifyToken(req, res) {
     if (req.headers?.authorization?.startsWith('Bearer ')) {
         const idToken = req.headers.authorization.split('Bearer ')[1];
         try {
@@ -39,7 +39,7 @@ async function verifyToken(req, res, next) {
         }
         catch { }
     }
-    next();
+
 }
 
 async function run() {
@@ -120,7 +120,7 @@ async function run() {
 
 
         // GET API
-        app.get('/products', async (req, res, next) => {
+        app.get('/products', async (req, res) => {
             const category = req.query.category
             const search = req.query.search;
             if (category) {
@@ -140,17 +140,28 @@ async function run() {
             else {
                 products = await cursor.toArray();
             }
-            if (search) {
-                const searchResult = products.filter(product => product.title.toLowerCase().includes(search))
-                res.send(searchResult)
-            }
-            next();
+            // if (search) {
+            //     const searchResult = products.filter(product => product.title.toLowerCase().includes(search))
+            //     res.send(searchResult)
+            // }
+            // let searchResult = []
+            // searchResult = value
             res.send({
                 count,
-                products
+                products,
+
             });
         })
 
+        app.get('/products/search', async (req, res) => {
+            const search = req.query.search
+            const cursor = productsCollection.find({})
+            const result = await cursor.toArray()
+            if (search) {
+                const searchResult = result.filter(product => product.title.toLowerCase().includes(search))
+                res.send(searchResult)
+            }
+        })
 
         app.get('/products/:id', async (req, res) => {
             const id = req.params.id;
@@ -217,6 +228,12 @@ async function run() {
             else {
                 res.status(401).json({ message: 'User Not Authorized' })
             }
+        })
+
+        app.get('/orders/savedProduct', async (req, res) => {
+            const cursor = ordersCollection.find({})
+            const result = await cursor.toArray()
+            res.send(result);
         })
     }
     finally {
