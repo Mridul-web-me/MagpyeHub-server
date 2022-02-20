@@ -9,9 +9,21 @@ var admin = require("firebase-admin");
 require('dotenv').config()
 const ObjectId = require('mongodb').ObjectId;
 const fileUpload = require('express-fileupload');
+// const stripe = require('stripe')(process.env.STRIPE_SECRET)
+// const momo = require("mtn-momo");
+// const { useUserProvisioning, useCollections } = require('mtn-momo');
+// const subscriptionKey = (process.env.COLLECTIONS_PRIMARY_KEY)
+
+
+// import axios from "axios";
+// import dotenv from "dotenv";
+// dotenv.config();
 
 
 const port = process.env.PORT || 5000;
+
+
+
 
 //FIREBASE ADMIN INITIALIZATION
 var serviceAccount = JSON.parse(process.env.SERVICE_FIREBASE_ACCOUNT)
@@ -35,7 +47,7 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 
-async function verifyToken(req, res) {
+async function verifyToken(req, res, next) {
     if (req.headers?.authorization?.startsWith('Bearer ')) {
         const idToken = req.headers.authorization.split('Bearer ')[1];
         try {
@@ -44,7 +56,7 @@ async function verifyToken(req, res) {
         }
         catch { }
     }
-
+    next()
 }
 
 async function run() {
@@ -55,6 +67,7 @@ async function run() {
         const newsLaterCollection = database.collection('newslater');
         const addressCollection = database.collection('addressBook');
         const ordersCollection = database.collection('orders');
+        const usersCollection = database.collection('users');
 
         //POST API
         // app.post('/products', async (req, res) => {
@@ -81,6 +94,12 @@ async function run() {
         app.post('/newsLater', async (req, res) => {
             const email = req.body;
             const result = await newsLaterCollection.insertOne(email);
+            console.log(result);
+            res.json(result)
+        })
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
             console.log(result);
             res.json(result)
         })
@@ -179,47 +198,103 @@ async function run() {
         })
 
 
-        app.get('/addressBook', async (req, res) => {
+        app.get('/addressBook', verifyToken, async (req, res) => {
             const email = req.query.email;
             console.log(email);
-            if (req.decodedUserEmail === email) {
-                const query = { email: email }
-                console.log(query);
-                const cursor = addressCollection.find(query)
-                const address = await cursor.toArray();
-                res.json(address)
-            }
-            else {
-                res.status(401).json({ message: 'User Not Authorized' })
-            }
+            const query = { email: email }
+            console.log(query);
+            const cursor = addressCollection.find(query)
+            const address = await cursor.toArray();
+            res.json(address)
         })
 
+        app.get('/users', verifyToken, async (req, res) => {
+            const users = req.body
+            const cursor = usersCollection.find(users)
+            const result = await cursor.toArray()
+            res.send(result)
+        })
 
-        app.put('/addressBook', async (req, res) => {
+        app.put('/users/admin', async (req, res) => {
             const email = req.body;
             console.log('put', email)
             const filter = { email: email };
             console.log(filter)
-            const updateDoc = { $set: email };
-            const result = await addressCollection.updateOne(filter, updateDoc);
+            const updateDoc = { $set: { role: 'admin' } };
+            const result = await usersCollection.updateOne(filter, updateDoc);
             res.json(result);
+            // const user = req.body;
+            // const filter = { email: user.email };
+            // const updateDoc = { $set: { role: 'admin' } };
+            // const result = await usersCollection.updateOne(filter, updateDoc);
+            // res.json(result);
         })
 
 
-        app.get('/orders', verifyToken, async (req, res) => {
+        app.get('/orders', async (req, res) => {
             const email = req.query.email;
             console.log(email);
-            if (req.decodedUserEmail === email) {
-                const query = { email: email }
-                console.log(query);
-                const cursor = ordersCollection.find(query)
-                const order = await cursor.toArray();
-                res.json(order)
-            }
-            else {
-                res.status(401).json({ message: 'User Not Authorized' })
-            }
+            const query = { email: email }
+            console.log(query);
+            const cursor = ordersCollection.find(query)
+            const order = await cursor.toArray();
+            res.json(order)
         })
+
+
+        // Payment
+        app.post('/create-payment-intent', async (req, res) => {
+            const paymentInfo = req.body;
+            const amount = paymentInfo.total * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'GBP',
+                amount: amount,
+                payment_method_types: ['card'],
+            });
+            res.json({ clientSecret: paymentIntent.client_secret })
+        })
+
+
+
+        // const { Collections } = momo.create({
+        //     callbackHost: process.env.CALLBACK_HOST
+        // });
+
+        // const collections = Collections({
+        //     userSecret: process.env.COLLECTIONS_USER_SECRET,
+        //     userId: process.env.COLLECTIONS_USER_ID,
+        //     primaryKey: process.env.COLLECTIONS_PRIMARY_KEY
+        // });
+
+        // // Request to pay
+        // collections
+        //     .requestToPay({
+        //         amount: "50",
+        //         currency: "EUR",
+        //         externalId: "123456",
+        //         payer: {
+        //             partyIdType: "MSISDN",
+        //             partyId: "256774290781"
+        //         },
+        //         payerMessage: "testing",
+        //         payeeNote: "hello"
+        //     })
+        //     .then(transactionId => {
+        //         console.log({ transactionId });
+
+        //         // Get transaction status
+        //         return collections.getTransaction(transactionId);
+        //     })
+        //     .then(transaction => {
+        //         console.log({ transaction });
+
+        //         // Get account balance
+        //         return collections.getBalance();
+        //     })
+        //     .then(accountBalance => console.log({ accountBalance }))
+        //     .catch(error => {
+        //         console.log(error);
+        //     });
     }
     finally {
         // await client.close();
