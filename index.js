@@ -5,19 +5,12 @@ const multer = require('multer')
 const upload = multer({ dest: 'products/' })
 const app = express()
 const cors = require('cors');
-var admin = require("firebase-admin");
+const admin = require("firebase-admin");
 require('dotenv').config()
 const ObjectId = require('mongodb').ObjectId;
 const fileUpload = require('express-fileupload');
-// const stripe = require('stripe')(process.env.STRIPE_SECRET)
-// const momo = require("mtn-momo");
-// const { useUserProvisioning, useCollections } = require('mtn-momo');
-// const subscriptionKey = (process.env.COLLECTIONS_PRIMARY_KEY)
+const stripe = require('stripe')(process.env.STRIPE_SECRET)
 
-
-// import axios from "axios";
-// import dotenv from "dotenv";
-// dotenv.config();
 
 
 const port = process.env.PORT || 5000;
@@ -26,7 +19,8 @@ const port = process.env.PORT || 5000;
 
 
 //FIREBASE ADMIN INITIALIZATION
-var serviceAccount = JSON.parse(process.env.SERVICE_FIREBASE_ACCOUNT)
+const serviceAccount = JSON.parse(process.env.SERVICE_FIREBASE_ACCOUNT)
+// const serviceAccount = require('./magpayhub-5fe9a-firebase-adminsdk-2wbpu-bd423174ef.json')
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
@@ -49,12 +43,14 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 async function verifyToken(req, res, next) {
     if (req.headers?.authorization?.startsWith('Bearer ')) {
-        const idToken = req.headers.authorization.split('Bearer ')[1];
+        const idToken = req.headers.authorization.split(' ')[1];
         try {
             const decodedUser = await admin.auth().verifyIdToken(idToken);
             req.decodedUserEmail = decodedUser.email;
         }
-        catch { }
+        catch {
+
+        }
     }
     next()
 }
@@ -118,18 +114,24 @@ async function run() {
         })
 
         // UPDATE API
-        app.put('/addressBook/:id', async (req, res) => {
+        app.put('/users/:id', async (req, res) => {
             const id = req.params.id;
-            const updatedAddressBook = req.body;
+            const updatedUser = req.body;
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
             const updateDoc = {
                 $set: {
-                    name: updatedAddressBook.name,
-                    email: updatedAddressBook.email
+                    name: updatedUser.name,
+                    email: updatedUser.email,
+                    phone: updatedUser.phone,
+                    address1: updatedUser.address1,
+                    address2: updatedUser.address2,
+                    telephone: updatedUser.telephone,
+                    country: updatedUser.country,
+                    postcode: updatedUser.postcode,
                 },
             };
-            const result = await addressCollection.updateOne(filter, updateDoc, options)
+            const result = await usersCollection.updateOne(filter, updateDoc, options)
             res.json(result);
         })
 
@@ -197,25 +199,36 @@ async function run() {
             res.send(result);
         })
 
-
-        app.get('/addressBook', verifyToken, async (req, res) => {
+        app.get('/users', async (req, res) => {
             const email = req.query.email;
             console.log(email);
             const query = { email: email }
             console.log(query);
-            const cursor = addressCollection.find(query)
-            const address = await cursor.toArray();
-            res.json(address)
+            if (email) {
+                cursor = usersCollection.find(query)
+                user = await cursor.toArray()
+                res.json(user)
+            }
+            else {
+                cursor = usersCollection.find({})
+                user = await cursor.toArray();
+                res.json(user)
+            }
         })
 
-        app.get('/users', verifyToken, async (req, res) => {
-            const users = req.body
-            const cursor = usersCollection.find(users)
-            const result = await cursor.toArray()
-            res.send(result)
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            console.log()
+            const query = { email: email };
+            const user = await usersCollection.findOne(query);
+            let isAdmin = false;
+            if (user?.role === 'admin') {
+                isAdmin = true;
+            }
+            res.json({ admin: isAdmin })
         })
 
-        app.put('/users/admin', async (req, res) => {
+        app.put('/users/admin', verifyToken, async (req, res) => {
             const email = req.body;
             console.log('put', email)
             const filter = { email: email };
@@ -223,22 +236,51 @@ async function run() {
             const updateDoc = { $set: { role: 'admin' } };
             const result = await usersCollection.updateOne(filter, updateDoc);
             res.json(result);
-            // const user = req.body;
-            // const filter = { email: user.email };
-            // const updateDoc = { $set: { role: 'admin' } };
-            // const result = await usersCollection.updateOne(filter, updateDoc);
-            // res.json(result);
+
         })
 
+        // app.put('/users/admin', async (req, res) => {
+        //     const user = req.body;
+        //     // console.log('put', req.decodedUserEmail)
+        //     const filter = { email: user.email };
+        //     const updateDoc = {
+        //         $set: { role: 'admin' }
+        //     };
+        //     const result = await usersCollection.updateOne(filter, updateDoc);
+        //     res.json(result);
+        // })
 
-        app.get('/orders', async (req, res) => {
+
+        //API status update Order
+        app.put('/orders/:_id', async (req, res) => {
+            const id = req.params._id;
+            const updatedStatus = req.body;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    status: updatedStatus.status
+                },
+            };
+            const result = await ordersCollection.updateOne(filter, updateDoc, options);
+            res.json(result);
+        });
+
+        app.get('/orders', verifyToken, async (req, res) => {
             const email = req.query.email;
             console.log(email);
             const query = { email: email }
             console.log(query);
-            const cursor = ordersCollection.find(query)
-            const order = await cursor.toArray();
-            res.json(order)
+            if (email) {
+                cursor = ordersCollection.find(query)
+                order = await cursor.toArray()
+                res.json(order)
+            } else {
+                cursor = ordersCollection.find({})
+                order = await cursor.toArray();
+                res.json(order)
+            }
+
         })
 
 
