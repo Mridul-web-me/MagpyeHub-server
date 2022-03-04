@@ -190,7 +190,6 @@ async function run() {
             res.send(product);
         })
 
-
         // DELETE API
         app.delete('/products/:id', async (req, res) => {
             const id = req.params.id;
