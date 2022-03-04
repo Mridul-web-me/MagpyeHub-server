@@ -114,8 +114,8 @@ async function run() {
         })
 
         // UPDATE API
-        app.put('/users/:id', async (req, res) => {
-            const id = req.params.id;
+        app.put('/users/:_id', async (req, res) => {
+            const id = req.params._id;
             const updatedUser = req.body;
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
@@ -196,6 +196,13 @@ async function run() {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await productsCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        app.delete('/orders/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await ordersCollection.deleteOne(query);
             res.send(result);
         })
 
