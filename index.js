@@ -13,9 +13,6 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET)
 
 const port = process.env.PORT || 5000;
 
-
-
-
 //FIREBASE ADMIN INITIALIZATION
 const serviceAccount = JSON.parse(process.env.SERVICE_FIREBASE_ACCOUNT)
 // const serviceAccount = require('./magpayhub-5fe9a-firebase-adminsdk-2wbpu-bd423174ef.json')
